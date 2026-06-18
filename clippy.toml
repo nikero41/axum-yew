@@ -1,0 +1,6 @@
+avoid-breaking-exported-api = true
+too-many-arguments-threshold = 8
+type-complexity-threshold = 250
+cognitive-complexity-threshold = 20
+enum-variant-name-threshold = 3
+too-large-for-stack = 256
