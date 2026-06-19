@@ -1,38 +1,88 @@
+use std::time::Duration;
+use tokio::signal;
+
 use anyhow::Result;
-use axum::{Router, routing::get};
-use sqlx::postgres::PgPoolOptions;
-use tower_http::cors::CorsLayer;
+use axum::{
+    Router,
+    http::{HeaderValue, Method, StatusCode},
+};
+use full_stack_crud::{app_state::AppState, db::init_db, handlers::router};
+use tower_http::{
+    LatencyUnit,
+    cors::CorsLayer,
+    timeout::TimeoutLayer,
+    trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+};
 use tracing::Level;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
     tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .pretty()
         .init();
 
-    dotenv::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await?;
-
-    let cors = CorsLayer::permissive();
-
-    let app = Router::new()
-        .with_state(pool)
-        .layer(cors)
-        .route("/", get(root));
+    let db = init_db().await?;
+    let app = app().with_state(AppState::new(db));
 
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("Listening on {}", addr);
+    tracing::info!("Listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    let _ = axum::serve(listener, app).await;
+    let _ = axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await;
 
     Ok(())
 }
 
-async fn root() -> &'static str {
-    "Hello, World!"
+fn app() -> Router<AppState> {
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(DefaultMakeSpan::new().include_headers(true))
+        .on_request(DefaultOnRequest::new().level(Level::INFO))
+        .on_response(
+            DefaultOnResponse::new()
+                .level(Level::INFO)
+                .latency_unit(LatencyUnit::Micros),
+        )
+        .on_failure(
+            DefaultOnFailure::new()
+                .level(Level::ERROR)
+                .latency_unit(LatencyUnit::Micros),
+        );
+    let cors_layer = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap());
+
+    router()
+        .layer(cors_layer)
+        .layer(trace_layer)
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::REQUEST_TIMEOUT,
+            Duration::from_secs(10),
+        ))
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
