@@ -1,0 +1,11 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+ALTER TABLE products DROP CONSTRAINT products_pkey;
+
+ALTER TABLE products ADD COLUMN new_id UUID NOT NULL DEFAULT gen_random_uuid();
+
+ALTER TABLE products DROP COLUMN id;
+
+ALTER TABLE products RENAME COLUMN new_id TO id;
+
+ALTER TABLE products ADD PRIMARY KEY (id);
