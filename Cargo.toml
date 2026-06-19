@@ -1,5 +1,5 @@
 [package]
-name = "axum-yew"
+name = "full_stack_crud"
 version = "0.1.0"
 edition = "2024"
 
