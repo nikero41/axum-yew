@@ -5,10 +5,9 @@ use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 pub type DbPool = Pool<Postgres>;
 
-pub async fn init_db() -> Result<DbPool> {
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+pub async fn init_db(database_url: &str, pool_size: u32) -> Result<DbPool> {
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(pool_size)
         .acquire_timeout(Duration::from_secs(3))
         .connect(&database_url)
         .await?;

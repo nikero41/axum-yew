@@ -18,17 +18,20 @@ use tracing::Level;
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
+    let config = Config::load();
+
     tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
+        .with_max_level(config.log_level)
         .pretty()
         .init();
 
-    let db = init_db().await?;
+    let db = init_db(&config.database_url, config.db_pool_size).await?;
     let app = app().with_state(AppState::new(db));
 
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("Listening on {}", addr);
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(&config.address)
+        .await
+        .unwrap();
+    tracing::info!("Listening on {}", config.address);
     let _ = axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await;
