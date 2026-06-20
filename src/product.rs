@@ -5,7 +5,7 @@ use sqlx::query_as;
 
 use crate::db::DbPool;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Product {
     pub id: uuid::Uuid,
     pub name: String,
