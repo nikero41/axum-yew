@@ -1,4 +1,4 @@
-pub mod app_state;
+pub mod app;
 pub mod config;
 pub mod db;
 pub mod handlers;

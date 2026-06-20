@@ -1,6 +1,6 @@
 use axum::{Router, http::StatusCode, routing::get};
 
-use crate::{app_state::AppState, handlers::product::product_routes};
+use crate::{app::AppState, handlers::product::product_routes};
 
 mod product;
 
