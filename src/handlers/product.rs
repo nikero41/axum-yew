@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
     routing::get,
 };
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 
 use crate::{app::AppState, product::Product};
@@ -55,9 +56,11 @@ pub async fn get_product(
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Validate)]
 pub struct NewProductInput {
+    #[garde(length(min = 1, max = 255))]
     name: String,
+    #[garde(range(min = 0))]
     price: i32,
 }
 
@@ -65,6 +68,10 @@ pub async fn create_product(
     State(state): State<AppState>,
     Json(new_product): Json<NewProductInput>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
+    new_product
+        .validate()
+        .map_err(|err| (StatusCode::BAD_REQUEST, format!("Error is: {}", err)))?;
+
     let product = state
         .product_service
         .create(new_product.name, new_product.price)
