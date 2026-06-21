@@ -21,14 +21,12 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Result<Self> {
-        let log_level = match env::var("LOG_LEVEL").as_deref() {
-            Ok("debug") => Level::DEBUG,
-            Ok("info") => Level::INFO,
-            Ok("warn") => Level::WARN,
-            Ok("error") => Level::ERROR,
-            Ok(_) => {
-                panic!("LOG_LEVEL must be one of debug, info, warn, or error")
-            }
+        let log_level = match env::var("LOG_LEVEL") {
+            Ok(debug) if debug.to_ascii_lowercase() == "debug" => Level::DEBUG,
+            Ok(info) if info.to_ascii_lowercase() == "info" => Level::INFO,
+            Ok(warn) if warn.to_ascii_lowercase() == "warn" => Level::WARN,
+            Ok(error) if error.to_ascii_lowercase() == "error" => Level::ERROR,
+            Ok(_) => anyhow::bail!("LOG_LEVEL must be one of debug, info, warn, or error"),
             Err(_) => Level::INFO,
         };
 
