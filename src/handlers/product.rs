@@ -119,17 +119,14 @@ pub async fn delete_product(
         .parse::<uuid::Uuid>()
         .map_err(|err| (StatusCode::BAD_REQUEST, format!("Error is: {}", err)))?;
 
-    println!("🪚 id: {:?}", id);
     let product = state.product_service.delete(id).await.map_err(|err| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Error is: {}", err),
         )
     })?;
-    println!("🪚 product: {:?}", product);
 
     if let Some(product) = product {
-        println!("🪚 💜");
         Ok(Json(product))
     } else {
         Err((
