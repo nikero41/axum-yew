@@ -43,7 +43,7 @@ impl Config {
             db_pool_size: env::var("DB_POOL_SIZE")
                 .unwrap_or("5".to_string())
                 .parse()
-                .expect("DB_POOL_SIZE must be a number"),
+                .context("DB_POOL_SIZE must be a number")?,
             request_limit: env::var("REQUEST_LIMIT")
                 .ok()
                 .map(|s| s.parse().expect("REQUEST_LIMIT must be a number")),

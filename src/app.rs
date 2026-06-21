@@ -26,7 +26,11 @@ impl AppState {
     }
 }
 
-pub async fn start_server(listener: tokio::net::TcpListener, state: AppState) {
+pub async fn start_server(
+    listener: tokio::net::TcpListener,
+    state: AppState,
+    config: &Config,
+) -> Result<()> {
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().include_headers(true))
         .on_request(DefaultOnRequest::new().level(Level::INFO))
@@ -41,15 +45,9 @@ pub async fn start_server(listener: tokio::net::TcpListener, state: AppState) {
                 .latency_unit(LatencyUnit::Micros),
         );
 
-    let origins = state
-        .config
-        .origins
-        .iter()
-        .map(|s| s.parse().unwrap())
-        .collect::<Vec<_>>();
     let cors_layer = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
-        .allow_origin(origins);
+        .allow_origin(config.origins.clone());
 
     let app = router()
         .layer(cors_layer)
