@@ -1,19 +1,26 @@
 use std::{env, net::SocketAddr};
 
+use garde::Validate;
 use tracing::Level;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Validate)]
 pub struct Config {
+    #[garde(url)]
     pub database_url: String,
+    #[garde(skip)]
     pub address: SocketAddr,
-    pub origins: Vec<String>,
+    #[garde(length(min = 1))]
+    pub origins: Vec<HeaderValue>,
+    #[garde(skip)]
     pub log_level: Level,
+    #[garde(range(min = 1))]
     pub db_pool_size: u32,
+    #[garde(skip)]
     pub request_limit: Option<u32>,
 }
 
 impl Config {
-    pub fn load() -> Self {
+    pub fn load() -> Result<Self> {
         let log_level = match env::var("LOG_LEVEL").as_deref() {
             Ok("debug") => Level::DEBUG,
             Ok("info") => Level::INFO,
@@ -31,7 +38,7 @@ impl Config {
             .parse::<u16>()
             .expect("Invalid port number");
 
-        Self {
+        let config = Self {
             database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
             address: SocketAddr::new(host.parse().expect("Invalid host"), port),
             origins: env::var("ORIGINS")
@@ -48,5 +55,8 @@ impl Config {
                 .ok()
                 .map(|s| s.parse().expect("REQUEST_LIMIT must be a number")),
         }
+        config.validate()?;
+
+        Ok(config)
     }
 }
