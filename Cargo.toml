@@ -1,24 +1,17 @@
-[package]
-name = "full_stack_crud"
+[workspace]
+members = ["backend", "frontend"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
 tokio = { version = "1.52.3", features = ["full"] }
 tracing = { version = "0.1.44", features = ["max_level_debug"] }
 tracing-subscriber = "0.3.23"
-axum = { version = "0.8.9", features = ["macros"] }
 serde = { version = "1.0.228", features = ["derive"] }
-tower-http = { version = "0.6.11", features = ["cors", "timeout", "trace"] }
 dotenv = "0.15.0"
-sqlx = { version = "0.9.0", features = [
-  "runtime-tokio",
-  "postgres",
-  "tls-rustls",
-  "macros",
-  "uuid",
-  "chrono",
-] }
 uuid = { version = "1.23.3", features = ["serde"] }
 anyhow = "1.0.102"
 chrono = { version = "0.4.45", features = ["serde"] }

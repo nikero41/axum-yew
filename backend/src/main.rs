@@ -1,5 +1,5 @@
 use anyhow::Result;
-use full_stack_crud::{
+use backend::{
     app::{AppState, start_server},
     config::Config,
     db::init_db,

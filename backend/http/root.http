@@ -1,0 +1,22 @@
+GET http://localhost:3000/api/products
+Content-Type: application/json
+
+###
+
+GET http://localhost:3000/api/products/71c2e648-e926-4f69-9a5e-2e8c9b530df2
+Content-Type: application/json
+
+###
+
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{
+    "name": "hello world",
+    "price": 100
+}
+
+###
+
+DELETE http://localhost:3000/api/products/71c2e648-e926-4f69-9a5e-2e8c9b530df2
+Content-Type: application/json

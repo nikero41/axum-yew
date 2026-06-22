@@ -9,7 +9,7 @@ show_command_error_code = true
 scroll_anchor = "auto"
 
 [jobs.backend]
-command = ["cargo", "run"]
+command = ["cargo", "run", "--bin", "backend"]
 background = false
 on_change_strategy = "kill_then_restart"
 
