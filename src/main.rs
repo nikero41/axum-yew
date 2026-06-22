@@ -8,7 +8,7 @@ use full_stack_crud::{
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
-    let config = Config::load();
+    let config = Config::load()?;
 
     tracing_subscriber::fmt()
         .with_max_level(config.log_level)
@@ -16,13 +16,11 @@ async fn main() -> Result<()> {
         .init();
 
     let db = init_db(&config.database_url, config.db_pool_size).await?;
-    let app_state = AppState::new(db, &config);
+    let app_state = AppState::new(db);
 
-    let listener = tokio::net::TcpListener::bind(&config.address)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&config.address).await?;
     tracing::info!("Listening on {}", config.address);
-    start_server(listener, app_state).await;
+    start_server(listener, app_state, &config).await?;
 
     Ok(())
 }

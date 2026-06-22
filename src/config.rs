@@ -1,5 +1,7 @@
 use std::{env, net::SocketAddr};
 
+use anyhow::{Context, Result};
+use axum::http::HeaderValue;
 use garde::Validate;
 use tracing::Level;
 
@@ -17,6 +19,8 @@ pub struct Config {
     pub db_pool_size: u32,
     #[garde(skip)]
     pub request_limit: Option<u32>,
+    #[garde(skip)]
+    pub request_timeout_seconds: u64,
 }
 
 impl Config {
@@ -34,16 +38,16 @@ impl Config {
         let port = env::var("PORT")
             .unwrap_or("3001".to_string())
             .parse::<u16>()
-            .expect("Invalid port number");
+            .context("Invalid port number")?;
 
         let config = Self {
-            database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
-            address: SocketAddr::new(host.parse().expect("Invalid host"), port),
+            database_url: env::var("DATABASE_URL").context("DATABASE_URL must be set")?,
+            address: SocketAddr::new(host.parse().context("Invalid host")?, port),
             origins: env::var("ORIGINS")
                 .unwrap_or("http://localhost:3000".to_string())
                 .split(',')
-                .map(String::from)
-                .collect(),
+                .map(|s| s.parse().context("ORIGINS must be a valid url"))
+                .collect::<Result<Vec<HeaderValue>>>()?,
             log_level,
             db_pool_size: env::var("DB_POOL_SIZE")
                 .unwrap_or("5".to_string())
@@ -51,8 +55,14 @@ impl Config {
                 .context("DB_POOL_SIZE must be a number")?,
             request_limit: env::var("REQUEST_LIMIT")
                 .ok()
-                .map(|s| s.parse().expect("REQUEST_LIMIT must be a number")),
-        }
+                .map(|s| s.parse().context("REQUEST_LIMIT must be a number"))
+                .transpose()?,
+            request_timeout_seconds: env::var("REQUEST_TIMEOUT_SECONDS")
+                .unwrap_or("10".to_string())
+                .parse()
+                .context("REQUEST_LIMIT must be a number")?,
+        };
+
         config.validate()?;
 
         Ok(config)
