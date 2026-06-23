@@ -6,6 +6,7 @@ use axum::{
 };
 use garde::Validate;
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 use crate::{app::AppState, product::Product};
 
@@ -114,24 +115,19 @@ pub async fn update_product(
 pub async fn delete_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Json<Product>, (StatusCode, String)> {
+) -> Result<Json<Value>, (StatusCode, String)> {
     let id = id
         .parse::<uuid::Uuid>()
         .map_err(|err| (StatusCode::BAD_REQUEST, format!("Error is: {}", err)))?;
 
-    let product = state.product_service.delete(id).await.map_err(|err| {
+    state.product_service.delete(id).await.map_err(|err| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Error is: {}", err),
         )
     })?;
 
-    if let Some(product) = product {
-        Ok(Json(product))
-    } else {
-        Err((
-            StatusCode::NOT_FOUND,
-            format!("could not find product with id: {}", id),
-        ))
-    }
+    Ok(Json(
+        json!({"success": true, "message": "Product deleted successfully"}),
+    ))
 }
