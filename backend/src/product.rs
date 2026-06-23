@@ -52,11 +52,13 @@ impl ProductService {
             .context("failed to get product")
     }
 
-    pub async fn delete(&self, id: uuid::Uuid) -> Result<Option<Product>> {
-        query_as!(Product, "SELECT * FROM products WHERE id=$1", id,)
-            .fetch_optional(&self.db)
+    pub async fn delete(&self, id: uuid::Uuid) -> Result<()> {
+        query_as!(Product, "DELETE FROM products WHERE id=$1", id,)
+            .execute(&self.db)
             .await
-            .context("failed to get product")
+            .context("failed to get product")?;
+
+        Ok(())
     }
 
     pub async fn update(&self, id: uuid::Uuid) -> Result<Option<Product>> {
