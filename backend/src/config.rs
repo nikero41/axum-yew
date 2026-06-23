@@ -26,10 +26,10 @@ pub struct Config {
 impl Config {
     pub fn load() -> Result<Self> {
         let log_level = match env::var("LOG_LEVEL") {
-            Ok(debug) if debug.to_ascii_lowercase() == "debug" => Level::DEBUG,
-            Ok(info) if info.to_ascii_lowercase() == "info" => Level::INFO,
-            Ok(warn) if warn.to_ascii_lowercase() == "warn" => Level::WARN,
-            Ok(error) if error.to_ascii_lowercase() == "error" => Level::ERROR,
+            Ok(debug) if debug.eq_ignore_ascii_case("debug") => Level::DEBUG,
+            Ok(info) if info.eq_ignore_ascii_case( "info") => Level::INFO,
+            Ok(warn) if warn.eq_ignore_ascii_case("warn") => Level::WARN,
+            Ok(error) if error.eq_ignore_ascii_case( "error") => Level::ERROR,
             Ok(_) => anyhow::bail!("LOG_LEVEL must be one of debug, info, warn, or error"),
             Err(_) => Level::INFO,
         };
